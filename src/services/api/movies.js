@@ -1,0 +1,83 @@
+import axios from 'axios';
+
+const API_URL = import.meta.env.VITE_BACKEND_URL;
+
+const moviesAxios = axios.create({
+  baseURL: `${API_URL}/movies`,
+});
+
+// Add token to requests
+moviesAxios.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+export const moviesService = {
+  // Movie CRUD
+  getAllMovies: (params) => moviesAxios.get('/', { params }),
+  getMovie: (id) => moviesAxios.get(`/${id}`),
+  getMovieById: (id) => moviesAxios.get(`/${id}`),
+  
+  uploadMovie: (formData, onUploadProgress) =>
+    moviesAxios.post('/upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      onUploadProgress: onUploadProgress,
+    }),
+  
+  createSeries: (filmmakerId, formData) =>
+    moviesAxios.post(`/${filmmakerId}/series`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }),
+  
+  addEpisodeToSeries: (filmmakerId, seriesId, formData) =>
+    moviesAxios.post(`/${filmmakerId}/series/${seriesId}/add-episode`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }),
+  
+  updateMovie: (id, data) => moviesAxios.put(`/${id}`, data),
+  deleteMovie: (id) => moviesAxios.delete(`/${id}`),
+
+  // User movies
+  getUserMovies: () => moviesAxios.get('/user/my-movies'),
+  getUserPurchasedMovies: () => moviesAxios.get('/user/purchased'),
+
+  // Reviews
+  getMovieReviews: (movieId) => moviesAxios.get(`/${movieId}/reviews`),
+  getMyReview: (movieId) => moviesAxios.get(`/${movieId}/my-review`),
+  addReview: (movieId, reviewData) =>
+    moviesAxios.post(`/${movieId}/add-review`, reviewData),
+  updateReview: (movieId, reviewId, reviewData) =>
+    moviesAxios.put(`/${movieId}/reviews/${reviewId}`, reviewData),
+  deleteReview: (movieId, reviewId) =>
+    moviesAxios.delete(`/${movieId}/reviews/${reviewId}`),
+
+  // Get filmmaker's series
+  getFilmmakerSeries: (filmmakerId) =>
+    moviesAxios.get(`/filmmaker/${filmmakerId}/series`),
+
+  // Get series episodes
+  getSeriesEpisodes: (filmmakerId, seriesId) =>
+    moviesAxios.get(`/${filmmakerId}/series/${seriesId}/episodes`),
+
+  // Ratings
+  rateMovie: (movieId, rating) =>
+    moviesAxios.post(`/rating`, { movieId, rating }),
+  getMovieRating: (movieId) => moviesAxios.get(`/${movieId}/rating`),
+
+  // Search & Filter
+  searchMovies: (query) => moviesAxios.get('/search', { params: { query } }),
+  filterMovies: (filters) => moviesAxios.get('/filter', { params: filters }),
+
+  // Stats
+  getMovieStats: (movieId) => moviesAxios.get(`/${movieId}/stats`),
+  getSecureStreamUrl: (movieId) => moviesAxios.get(`/secure-stream/${movieId}`),
+  getSignedStreamUrl: (movieId, quality = "auto") =>
+    moviesAxios.get(`/${movieId}/stream-url`, { params: { quality } }),
+};
+
+// Export as named export for easier use
+export const moviesAPI = moviesService;
+export default moviesService;

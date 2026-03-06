@@ -1,0 +1,404 @@
+import { createSlice, createAsyncThunk, createAction } from '@reduxjs/toolkit';
+import axios from 'axios';
+
+export const setUploadProgress = createAction('movies/setUploadProgress');
+
+const API_URL = import.meta.env.VITE_BACKEND_URL;
+
+// ====== ASYNC THUNKS ======
+
+export const uploadMovie = createAsyncThunk(
+  'movies/uploadMovie',
+  async (formData, { dispatch, rejectWithValue }) => {
+    try {
+      const token = localStorage.getItem('token');
+
+      const response = await axios.post(
+        `${API_URL}/movies/upload`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+            Authorization: `Bearer ${token}`,
+          },
+          onUploadProgress: (event) => {
+            if (!event.total) return;
+
+            const percent = Math.round(
+              (event.loaded * 100) / event.total
+            );
+
+            dispatch(setUploadProgress(percent));
+          },
+        }
+      );
+
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || 'Upload failed'
+      );
+    }
+  }
+);
+
+export const createSeries = createAsyncThunk(
+  'movies/createSeries',
+  async ({ filmmakerId, formData }, { rejectWithValue }) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.post(`${API_URL}/movies/${filmmakerId}/series`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Create series failed');
+    }
+  }
+);
+
+export const addEpisodeToSeries = createAsyncThunk(
+  'movies/addEpisodeToSeries',
+  async ({ filmmakerId, seriesId, formData }, { rejectWithValue }) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.post(`${API_URL}/movies/${filmmakerId}/series/${seriesId}/add-episode`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Add episode to series failed');
+    }
+  }
+);
+
+export const getUserMovies = createAsyncThunk(
+  'movies/getUserMovies',
+  async (_, { rejectWithValue }) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API_URL}/movies/user/my-movies`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to fetch movies');
+    }
+  }
+);
+
+export const getFilmmakerSeries = createAsyncThunk(
+  'movies/getFilmmakerSeries',
+  async (filmmakerId, { rejectWithValue }) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API_URL}/movies/filmmaker/${filmmakerId}/series`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to fetch series');
+    }
+  }
+);
+
+export const getSeriesEpisodes = createAsyncThunk(
+  'movies/getSeriesEpisodes',
+  async ({ filmmakerId, seriesId }, { rejectWithValue }) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API_URL}/movies/${filmmakerId}/series/${seriesId}/episodes`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to fetch episodes');
+    }
+  }
+);
+
+export const clearUploadState = createAsyncThunk(
+  'movies/clearUploadState',
+  async () => {
+    return;
+  }
+);
+
+export const getMovieReviews = createAsyncThunk(
+  'movies/getReviews',
+  async (movieId, { rejectWithValue }) => {
+    try {
+      const response = await axios.get(`${API_URL}/movies/${movieId}/reviews`);
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to fetch reviews');
+    }
+  }
+);
+
+export const addReview = createAsyncThunk(
+  'movies/addReview',
+  async ({ movieId, reviewData }, { rejectWithValue }) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.post(`${API_URL}/movies/${movieId}/add-review`, reviewData, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to add review');
+    }
+  }
+);
+
+export const rateMovie = createAsyncThunk(
+  'movies/rateMovie',
+  async ({ movieId, rating }, { rejectWithValue }) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.post(`${API_URL}/movies/rating`, { movieId, rating }, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to rate movie');
+    }
+  }
+);
+
+export const deleteMovie = createAsyncThunk(
+  'movies/deleteMovie',
+  async (movieId, { rejectWithValue }) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.delete(`${API_URL}/movies/${movieId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to delete movie');
+    }
+  }
+);
+// moviesSlice.js - Fix the shareMovies thunk
+export const shareMovies = createAsyncThunk(
+  'movies/shareMovies',
+  async (shareData, { rejectWithValue }) => { // Change parameter name from 'movie' to 'shareData'
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.post(
+        `${API_URL}/movies/share`,
+        shareData, // Send the data directly, not nested
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to share movies');
+    }
+  }
+);
+
+// ====== SLICE ======
+const movieSlice = createSlice({
+  name: 'movies',
+  initialState: {
+    userMovies: [],
+    uploadLoading: false,
+    uploadProgress: 0,
+    uploadSuccess: false,
+    uploadError: null,
+    loading: false,
+    error: null,
+    seriesLoading: false,
+    filmmakerSeries: [],
+    seriesEpisodes: {},
+    reviews: {},
+  },
+  reducers: {
+    clearUploadSuccess: (state) => {
+      state.uploadSuccess = false;
+      state.uploadProgress = 0;
+    },
+    clearError: (state) => {
+      state.error = null;
+    },
+  },
+  extraReducers: (builder) => {
+    // Single builder chain with all cases
+    builder
+      // Upload Movie - Only one set of handlers
+      .addCase(uploadMovie.pending, (state) => {
+        state.uploadLoading = true;
+        state.uploadProgress = 0;
+        state.uploadSuccess = false;
+        state.uploadError = null;
+      })
+      .addCase(uploadMovie.fulfilled, (state, action) => {
+        state.uploadLoading = false;
+        state.uploadProgress = 100;
+        state.uploadSuccess = true;
+        if (action.payload) {
+          state.userMovies.push(action.payload);
+        }
+      })
+      .addCase(uploadMovie.rejected, (state, action) => {
+        state.uploadLoading = false;
+        state.uploadError = action.payload;
+        state.uploadProgress = 0;
+      })
+      .addCase(setUploadProgress, (state, action) => {
+        state.uploadProgress = action.payload;
+      })
+      
+      // Create Series
+      .addCase(createSeries.pending, (state) => {
+        state.uploadLoading = true;
+        state.uploadError = null;
+        state.uploadSuccess = false;
+      })
+      .addCase(createSeries.fulfilled, (state, action) => {
+        state.uploadLoading = false;
+        state.uploadSuccess = true;
+        if (action.payload) {
+          state.filmmakerSeries.push(action.payload);
+        }
+      })
+      .addCase(createSeries.rejected, (state, action) => {
+        state.uploadLoading = false;
+        state.uploadError = action.payload;
+      })
+      
+      // Add Episode to Series
+      .addCase(addEpisodeToSeries.pending, (state) => {
+        state.uploadLoading = true;
+        state.uploadError = null;
+        state.uploadSuccess = false;
+      })
+      .addCase(addEpisodeToSeries.fulfilled, (state, action) => {
+        state.uploadLoading = false;
+        state.uploadSuccess = true;
+      })
+      .addCase(addEpisodeToSeries.rejected, (state, action) => {
+        state.uploadLoading = false;
+        state.uploadError = action.payload;
+      })
+      
+      // Get User Movies
+      .addCase(getUserMovies.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(getUserMovies.fulfilled, (state, action) => {
+        state.loading = false;
+        state.userMovies = action.payload || [];
+      })
+      .addCase(getUserMovies.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      
+      // Get Filmmaker Series
+      .addCase(getFilmmakerSeries.pending, (state) => {
+        state.seriesLoading = true;
+        state.error = null;
+      })
+      .addCase(getFilmmakerSeries.fulfilled, (state, action) => {
+        state.seriesLoading = false;
+        state.filmmakerSeries = action.payload?.data || action.payload || [];
+      })
+      .addCase(getFilmmakerSeries.rejected, (state, action) => {
+        state.seriesLoading = false;
+        state.error = action.payload;
+        state.filmmakerSeries = [];
+      })
+      
+      // Get Series Episodes
+      .addCase(getSeriesEpisodes.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(getSeriesEpisodes.fulfilled, (state, action) => {
+        state.loading = false;
+        const { filmmakerId, seriesId } = action.meta.arg;
+        const key = `${filmmakerId}-${seriesId}`;
+        state.seriesEpisodes[key] = action.payload?.data || action.payload || [];
+      })
+      .addCase(getSeriesEpisodes.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      
+      // Clear Upload State
+      .addCase(clearUploadState.fulfilled, (state) => {
+        state.uploadLoading = false;
+        state.uploadProgress = 0;
+        state.uploadSuccess = false;
+        state.uploadError = null;
+      })
+      
+      // Get Reviews
+      .addCase(getMovieReviews.fulfilled, (state, action) => {
+        const movieId = action.meta.arg;
+        state.reviews[movieId] = action.payload || [];
+      })
+      
+      // Add Review
+      .addCase(addReview.fulfilled, (state, action) => {
+        const movieId = action.meta.arg.movieId;
+        if (!state.reviews[movieId]) {
+          state.reviews[movieId] = [];
+        }
+        state.reviews[movieId].push(action.payload);
+      })
+      
+      // Rate Movie
+      .addCase(rateMovie.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(rateMovie.fulfilled, (state, action) => {
+        state.loading = false;
+      })
+      .addCase(rateMovie.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      .addCase(shareMovies.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(shareMovies.fulfilled, (state, action) => {
+        state.loading = false;
+        state.userMovies = action.payload;
+      })
+      .addCase(shareMovies.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      
+      // Delete Movie
+      .addCase(deleteMovie.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(deleteMovie.fulfilled, (state, action) => {
+        state.loading = false;
+        const movieId = action.meta.arg;
+        state.userMovies = state.userMovies.filter(movie => 
+          movie.id !== movieId && movie._id !== movieId
+        );
+      })
+      .addCase(deleteMovie.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      });
+  },
+});
+
+export const { clearUploadSuccess, clearError } = movieSlice.actions;
+export default movieSlice.reducer;
