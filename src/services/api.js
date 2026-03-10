@@ -301,3 +301,28 @@ export const getSeriesVideos = async (seriesId) => {
 //     return [];
 //   }
 // };
+
+export default {
+  getTrendingMovies,
+  getTrendingWeekMovies,
+  getTopRatedMovies,
+  getPopularMovies,
+  getMovieDetails,
+  getMoviesByGenre,
+  getGenres,
+  getLatestMovies,
+  getNowPlayingMovies,
+  getUpcomingMovies,
+  searchMovies,
+  searchBackendMovies,
+  getMovieImages,
+  getBackendMovies,
+  getBackendUpcomingMovies,
+  getBackendTrendingMovies,
+  getBackendTopRatedMovies,
+  getBackendFeaturedMovies,
+  getBackendPopularMovies,
+  getBackendRecentMovies,
+  getMovieVideos,
+  getSeriesVideos,
+};

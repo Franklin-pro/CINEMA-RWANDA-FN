@@ -8,6 +8,7 @@ import Navbar from "./components/Navbar"
 import ScrollTop from "./components/ScrollTop"
 import ScrollToTop from "./components/ScrollToTop"
 import { MovieProvider } from "./context/MovieProvider";
+import { ThemeProvider } from "./context/ThemeContext";
 
 // Pages
 import Login from './pages/Login';
@@ -259,13 +260,15 @@ function AppContent() {
 function App() {
   return (
     <Provider store={store}>
-      <MovieProvider>
-        <Router>
-          <div className="min-h-screen">
-            <AppContent />
-          </div>
-        </Router>
-      </MovieProvider>
+      <ThemeProvider>
+        <MovieProvider>
+          <Router>
+            <div className="min-h-screen bg-white dark:bg-gray-950 transition-colors">
+              <AppContent />
+            </div>
+          </Router>
+        </MovieProvider>
+      </ThemeProvider>
     </Provider>
   );
 }

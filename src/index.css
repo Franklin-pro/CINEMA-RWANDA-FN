@@ -1,6 +1,12 @@
 @import "tailwindcss";
 
-
 html {
-scroll-behavior: smooth;
+  scroll-behavior: smooth;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+  }
 }

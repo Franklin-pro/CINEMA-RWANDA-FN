@@ -16,9 +16,12 @@ import {
   TrendingUp,
   Film,
   Tv,
+  Smartphone,
+  Wallet,
+  Building2,
 } from "lucide-react";
 import { moviesAPI } from "../services/api/movies";
-import { processMoMoPayment, checkMoMoPaymentStatus } from "../store/slices/paymentSlice";
+import { processMoMoPayment, checkMoMoPaymentStatus, processFlutterwavePayment } from "../store/slices/paymentSlice";
 
 function formatCurrency(amount, currency = "RWF") {
   try {
@@ -45,6 +48,7 @@ export default function Payment() {
   // Normalize type: movie_watch -> watch, movie_download -> download
   const normalizedType = typeParam.replace('movie_', '');
   const [paymentType, setPaymentType] = useState(normalizedType);
+  const [paymentMethod, setPaymentMethod] = useState("momo"); // momo, bank, paypal, stripe
   const [movie, setMovie] = useState(null);
   const [movieLoading, setMovieLoading] = useState(true);
   const [movieError, setMovieError] = useState(null);
@@ -239,10 +243,8 @@ localStorage.setItem("localpayment:",localPaymentStatus)
       };
       
       if (paymentType === 'series_access') {
-        // payload.seriesId = movieId;
         payload.accessPeriod = selectedAccessPeriod;
         payload.contentType = 'series';
-        // Include access period in description
         payload.description = `Series Access: ${movie?.title} - ${getAccessPeriodLabel(selectedAccessPeriod)}`;
       } else {
         payload.description = `${paymentType === 'watch' ? 'Watch' : 'Download'}: ${movie?.title}`;
@@ -273,6 +275,78 @@ localStorage.setItem("localpayment:",localPaymentStatus)
       setFormError(err.message || "Payment processing failed.");
     }
   };
+
+  const doFlutterwavePayment = async () => {
+    setFormError("");
+    try {
+      setProcessing(true);
+      setStep("processing");
+      const totalAmount = moviePrice[paymentType];
+      
+      const payload = { 
+        movieId, 
+        type: paymentType, 
+        amount: totalAmount, 
+        userId: user?.id, 
+        currency,
+        email: user?.email,
+        paymentMethod: 'card'
+      };
+      
+      if (paymentType === 'series_access') {
+        payload.accessPeriod = selectedAccessPeriod;
+        payload.contentType = 'series';
+        payload.description = `Series Access: ${movie?.title} - ${getAccessPeriodLabel(selectedAccessPeriod)}`;
+      } else {
+        payload.description = `${paymentType === 'watch' ? 'Watch' : 'Download'}: ${movie?.title}`;
+      }
+      
+      const result = await dispatch(processFlutterwavePayment(payload)).unwrap();
+      if (result.link) {
+        window.location.href = result.link;
+      }
+    } catch (err) {
+      setProcessing(false);
+      setStep("confirm");
+      setFormError(err.message || "Payment failed.");
+    }
+  };
+
+  // const doPayPalPayment = async () => {
+  //   setFormError("");
+  //   try {
+  //     setProcessing(true);
+  //     setStep("processing");
+  //     const totalAmount = moviePrice[paymentType];
+      
+  //     const payload = { 
+  //       movieId, 
+  //       type: paymentType, 
+  //       amount: totalAmount, 
+  //       userId: user?.id, 
+  //       currency,
+  //       paymentMethod: 'paypal'
+  //     };
+      
+  //     if (paymentType === 'series_access') {
+  //       payload.accessPeriod = selectedAccessPeriod;
+  //       payload.contentType = 'series';
+  //       payload.description = `Series Access: ${movie?.title} - ${getAccessPeriodLabel(selectedAccessPeriod)}`;
+  //     } else {
+  //       payload.description = `${paymentType === 'watch' ? 'Watch' : 'Download'}: ${movie?.title}`;
+  //     }
+      
+  //     // Redirect to PayPal (backend should return approval URL)
+  //     const result = await dispatch(processPayPalPayment(payload)).unwrap();
+  //     if (result.approvalUrl) {
+  //       window.location.href = result.approvalUrl;
+  //     }
+  //   } catch (err) {
+  //     setProcessing(false);
+  //     setStep("confirm");
+  //     setFormError(err.message || "PayPal payment failed.");
+  //   }
+  // };
 
   const retryPayment = () => {
     setStep("choose");
@@ -424,7 +498,7 @@ localStorage.setItem("localpayment:",localPaymentStatus)
                         <button onClick={() => handleStartPayment("watch")} className="flex items-center justify-between gap-4 p-3 rounded-lg bg-gray-800 hover:bg-gray-700 transition">
                           <div className="flex items-center gap-3">
                             <div className="p-2 bg-gray-700 rounded-md"><Play className="w-5 h-5" /></div>
-                            <div className="text-left"><div className="text-sm font-semibold text-white">Watch — 48 hours</div><div className="text-xs text-gray-400">Stream from any device</div></div>
+                            <div className="text-left"><div className="text-sm font-semibold text-white">Watch — 30 days</div><div className="text-xs text-gray-400">Stream from any device</div></div>
                           </div>
                           <div className="text-sm font-bold text-blue-400">{formatCurrency(moviePrice.watch, currency)}</div>
                         </button>
@@ -441,14 +515,14 @@ localStorage.setItem("localpayment:",localPaymentStatus)
                 )}
 
                 {step === "confirm" && (
-                  <form onSubmit={doMoMoPayment} className="space-y-3 md:space-y-4">
+                  <div className="space-y-3 md:space-y-4">
                     <h3 className="text-lg md:text-xl text-white font-semibold">Confirm & Pay</h3>
                     <div className="text-sm text-gray-100 mb-1">Item</div>
                     <div className="bg-gray-100 rounded-md p-3 text-sm text-black">
                       <div className="flex justify-between">
                         <div>
                           {paymentType === "watch" 
-                            ? "Watch — 48 hours" 
+                            ? "Watch — 30 days" 
                             : paymentType === "download" 
                             ? "Download — Keep forever" 
                             : `Series Access — ${getAccessPeriodLabel(selectedAccessPeriod)}`}
@@ -461,31 +535,77 @@ localStorage.setItem("localpayment:",localPaymentStatus)
                         </div>
                       )}
                     </div>
+                    
                     <div>
-                      <label className="text-sm text-gray-300 block mb-2">MTN Mobile Number</label>
-                      <input 
-                        type="tel" 
-                        value={phone} 
-                        onChange={(e) => setPhone(e.target.value)} 
-                        placeholder="0788*******" 
-                        className={`w-full px-3 md:px-4 py-2 md:py-3 rounded-lg bg-gray-800 border text-white text-sm md:text-base ${formError ? "border-red-500" : "border-gray-700 focus:border-blue-400"} focus:outline-none transition`} 
-                        disabled={processing} 
-                      />
-                      {formError && <p className="mt-2 text-xs text-red-400 flex items-center gap-2"><AlertCircle className="w-4 h-4" /> {formError}</p>}
+                      <label className="text-sm text-gray-300 block mb-2">Payment Method</label>
+                      <div className="grid grid-cols-2 gap-2">
+                        <button onClick={() => setPaymentMethod("momo")} className={`p-3 rounded-lg border-2 transition ${paymentMethod === "momo" ? "border-blue-500 bg-blue-500/10" : "border-gray-700 bg-gray-800"}`}>
+                          <Smartphone className="w-5 h-5 text-white mx-auto mb-1" />
+                          <div className="text-xs text-white">MTN MoMo</div>
+                        </button>
+                        <button disabled className="p-3 rounded-lg border-2 border-gray-700 bg-gray-800/50 opacity-50 cursor-not-allowed relative">
+                          <Building2 className="w-5 h-5 text-gray-500 mx-auto mb-1" />
+                          <div className="text-xs text-gray-500">Bank Transfer</div>
+                          <span className="absolute top-1 right-1 text-[8px] bg-yellow-500 text-black px-1 rounded">Coming Soon</span>
+                        </button>
+                        <button onClick={() => setPaymentMethod("card")} className={`p-3 rounded-lg border-2 transition ${paymentMethod === "card" ? "border-blue-500 bg-blue-500/10" : "border-gray-700 bg-gray-800"}`}>
+                          <CreditCard className="w-5 h-5 text-white mx-auto mb-1" />
+                          <div className="text-xs text-white">Card</div>
+                        </button>
+                        <button disabled className="p-3 rounded-lg border-2 border-gray-700 bg-gray-800/50 opacity-50 cursor-not-allowed relative">
+                          <Wallet className="w-5 h-5 text-gray-500 mx-auto mb-1" />
+                          <div className="text-xs text-gray-500">PayPal</div>
+                          <span className="absolute top-1 right-1 text-[8px] bg-yellow-500 text-black px-1 rounded">Soon</span>
+                        </button>
+                      </div>
                     </div>
-                    <div className="space-y-2 md:space-y-3">
-                      <button type="submit" disabled={processing} className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 md:py-3 rounded-lg bg-blue-500 hover:bg-blue-600 text-black font-semibold disabled:opacity-50 text-sm md:text-base transition">
-                        {processing ? <><Loader className="w-4 h-4 animate-spin" /> Processing...</> : <>Pay {formatCurrency(moviePrice[paymentType], currency)}</>}
-                      </button>
-                      <button type="button" onClick={() => {setStep("choose");setFormError("");}} className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 md:py-3 rounded-lg bg-gray-700 hover:bg-gray-600 text-white disabled:opacity-50 text-sm md:text-base transition" disabled={processing}>
-                        <X className="w-4 h-4" /> Change selection
-                      </button>
-                    </div>
-                    <div className="pt-3 text-xs text-gray-400">
-                      <Lock className="inline-block w-4 h-4 mr-1" /> 
-                      You will receive a USSD prompt on your phone to approve the payment.
-                    </div>
-                  </form>
+
+                    {paymentMethod === "momo" && (
+                      <form onSubmit={doMoMoPayment}>
+                        <div className="mb-3">
+                          <label className="text-sm text-gray-300 block mb-2">MTN Mobile Number</label>
+                          <input 
+                            type="tel" 
+                            value={phone} 
+                            onChange={(e) => setPhone(e.target.value)} 
+                            placeholder="0788*******" 
+                            className={`w-full px-3 md:px-4 py-2 md:py-3 rounded-lg bg-gray-800 border text-white text-sm md:text-base ${formError ? "border-red-500" : "border-gray-700 focus:border-blue-400"} focus:outline-none transition`} 
+                            disabled={processing} 
+                          />
+                        </div>
+                        <button type="submit" disabled={processing} className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 md:py-3 rounded-lg bg-blue-500 hover:bg-blue-600 text-black font-semibold disabled:opacity-50 text-sm md:text-base transition">
+                          {processing ? <><Loader className="w-4 h-4 animate-spin" /> Processing...</> : <>Pay {formatCurrency(moviePrice[paymentType], currency)}</>}
+                        </button>
+                        <div className="pt-3 text-xs text-gray-400">
+                          <Lock className="inline-block w-4 h-4 mr-1" /> 
+                          You will receive a USSD prompt on your phone to approve the payment.
+                        </div>
+                      </form>
+                    )}
+
+                    {paymentMethod === "card" && (
+                      <div>
+                        <button 
+                          type="button" 
+                          onClick={doFlutterwavePayment} 
+                          disabled={processing} 
+                          className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 md:py-3 rounded-lg bg-blue-500 hover:bg-blue-600 text-black font-semibold disabled:opacity-50 text-sm md:text-base transition"
+                        >
+                          {processing ? <><Loader className="w-4 h-4 animate-spin" /> Processing...</> : <>Pay {formatCurrency(moviePrice[paymentType], currency)}</>}
+                        </button>
+                        <div className="pt-3 text-xs text-gray-400">
+                          <Lock className="inline-block w-4 h-4 mr-1" /> 
+                          Secured by Flutterwave. Supports cards and bank transfers.
+                        </div>
+                      </div>
+                    )}
+
+                    {formError && <p className="mt-2 text-xs text-red-400 flex items-center gap-2"><AlertCircle className="w-4 h-4" /> {formError}</p>}
+                    
+                    <button type="button" onClick={() => {setStep("choose");setFormError("");}} className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 md:py-3 rounded-lg bg-gray-700 hover:bg-gray-600 text-white disabled:opacity-50 text-sm md:text-base transition" disabled={processing}>
+                      <X className="w-4 h-4" /> Change selection
+                    </button>
+                  </div>
                 )}
 
                 {step === "processing" && (
@@ -623,7 +743,7 @@ localStorage.setItem("localpayment:",localPaymentStatus)
               <div className="text-right text-xs text-gray-400">
                 <div>Payment method</div>
                 <div className="mt-1 inline-flex items-center gap-1 px-2 py-1 rounded bg-gray-800 text-white">
-                  <CreditCard className="w-4 h-4" /> MTN MoMo
+                  <Smartphone className="w-4 h-4" /> MTN MoMo
                 </div>
               </div>
             </div>

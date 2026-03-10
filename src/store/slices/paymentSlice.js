@@ -45,18 +45,54 @@ export const checkMoMoPaymentStatus = createAsyncThunk(
   }
 );
 
-// Process Stripe Payment
-export const processStripePayment = createAsyncThunk(
-  'payments/processStripe',
+// Process Flutterwave Payment
+export const processFlutterwavePayment = createAsyncThunk(
+  'payments/processFlutterwave',
   async (paymentData, { rejectWithValue }) => {
     try {
-      const response = await paymentsService.processStripePayment(paymentData);
+      const response = await paymentsService.processFlutterwavePayment(paymentData);
       return response.data;
     } catch (error) {
       return rejectWithValue({
         ...error.response?.data,
         statusCode: error.response?.status,
-        message: error.response?.data?.message || 'Stripe payment failed',
+        message: error.response?.data?.message || 'Flutterwave payment failed',
+        isApiError: true
+      });
+    }
+  }
+);
+
+// Verify Flutterwave Transaction
+export const verifyFlutterwaveTransaction = createAsyncThunk(
+  'payments/verifyFlutterwave',
+  async (transactionId, { rejectWithValue }) => {
+    try {
+      const response = await paymentsService.verifyFlutterwaveTransaction(transactionId);
+      return response.data;
+    } catch (error) {
+      return rejectWithValue({
+        ...error.response?.data,
+        statusCode: error.response?.status,
+        message: error.response?.data?.message || 'Transaction verification failed',
+        isApiError: true
+      });
+    }
+  }
+);
+
+// Process PayPal Payment
+export const processPayPalPayment = createAsyncThunk(
+  'payments/processPayPal',
+  async (paymentData, { rejectWithValue }) => {
+    try {
+      const response = await paymentsService.processPayPalPayment(paymentData);
+      return response.data;
+    } catch (error) {
+      return rejectWithValue({
+        ...error.response?.data,
+        statusCode: error.response?.status,
+        message: error.response?.data?.message || 'PayPal payment failed',
         isApiError: true
       });
     }
@@ -87,18 +123,18 @@ export const processSubscriptionMomoPayment = createAsyncThunk(
   }
 );
 
-// Process Subscription Stripe Payment
-export const processSubscriptionStripePayment = createAsyncThunk(
-  'payments/processSubscriptionStripe',
+// Process Subscription Flutterwave Payment
+export const processSubscriptionFlutterwavePayment = createAsyncThunk(
+  'payments/processSubscriptionFlutterwave',
   async (paymentData, { rejectWithValue }) => {
     try {
-      const response = await paymentsService.processSubscriptionStripePayment(paymentData);
+      const response = await paymentsService.processSubscriptionFlutterwavePayment(paymentData);
       return response.data;
     } catch (error) {
       return rejectWithValue({
         ...error.response?.data,
         statusCode: error.response?.status,
-        message: error.response?.data?.message || 'Stripe payment failed',
+        message: error.response?.data?.message || 'Flutterwave payment failed',
         isApiError: true
       });
     }
@@ -363,20 +399,20 @@ const paymentSlice = createSlice({
         }
       });
 
-    // ====== PROCESS STRIPE PAYMENT ======
+    // ====== PROCESS FLUTTERWAVE PAYMENT ======
     builder
-      .addCase(processStripePayment.pending, (state) => {
+      .addCase(processFlutterwavePayment.pending, (state) => {
         state.loading = true;
         state.error = null;
         state.success = false;
       })
-      .addCase(processStripePayment.fulfilled, (state, action) => {
+      .addCase(processFlutterwavePayment.fulfilled, (state, action) => {
         state.loading = false;
         const response = action.payload;
         
         if (response.success === false) {
           state.error = {
-            message: response.message || 'Stripe payment failed',
+            message: response.message || 'Flutterwave payment failed',
             details: response.details || response,
             isApiError: true
           };
@@ -387,7 +423,7 @@ const paymentSlice = createSlice({
         state.currentTransaction = response.data || response;
         state.success = true;
       })
-      .addCase(processStripePayment.rejected, (state, action) => {
+      .addCase(processFlutterwavePayment.rejected, (state, action) => {
         state.loading = false;
         
         if (action.payload?.isApiError) {
@@ -399,7 +435,50 @@ const paymentSlice = createSlice({
           };
         } else {
           state.error = {
-            message: action.payload || 'Stripe payment request failed',
+            message: action.payload || 'Flutterwave payment request failed',
+            isNetworkError: true
+          };
+        }
+        state.success = false;
+      });
+
+    // ====== PROCESS PAYPAL PAYMENT ======
+    builder
+      .addCase(processPayPalPayment.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+        state.success = false;
+      })
+      .addCase(processPayPalPayment.fulfilled, (state, action) => {
+        state.loading = false;
+        const response = action.payload;
+        
+        if (response.success === false) {
+          state.error = {
+            message: response.message || 'PayPal payment failed',
+            details: response.details || response,
+            isApiError: true
+          };
+          state.success = false;
+          return;
+        }
+        
+        state.currentTransaction = response.data || response;
+        state.success = true;
+      })
+      .addCase(processPayPalPayment.rejected, (state, action) => {
+        state.loading = false;
+        
+        if (action.payload?.isApiError) {
+          state.error = {
+            message: action.payload.message,
+            details: action.payload.details || action.payload,
+            statusCode: action.payload.statusCode,
+            isApiError: true
+          };
+        } else {
+          state.error = {
+            message: action.payload || 'PayPal payment request failed',
             isNetworkError: true
           };
         }
@@ -465,20 +544,20 @@ const paymentSlice = createSlice({
         state.success = false;
       });
 
-    // ====== PROCESS SUBSCRIPTION STRIPE PAYMENT ======
+    // ====== PROCESS SUBSCRIPTION FLUTTERWAVE PAYMENT ======
     builder
-      .addCase(processSubscriptionStripePayment.pending, (state) => {
+      .addCase(processSubscriptionFlutterwavePayment.pending, (state) => {
         state.loading = true;
         state.error = null;
         state.success = false;
       })
-      .addCase(processSubscriptionStripePayment.fulfilled, (state, action) => {
+      .addCase(processSubscriptionFlutterwavePayment.fulfilled, (state, action) => {
         state.loading = false;
         const response = action.payload;
         
         if (response.success === false) {
           state.error = {
-            message: response.message || 'Stripe payment failed',
+            message: response.message || 'Flutterwave payment failed',
             details: response.details || response,
             isApiError: true
           };
@@ -489,7 +568,7 @@ const paymentSlice = createSlice({
         state.currentTransaction = response.data || response;
         state.success = true;
       })
-      .addCase(processSubscriptionStripePayment.rejected, (state, action) => {
+      .addCase(processSubscriptionFlutterwavePayment.rejected, (state, action) => {
         state.loading = false;
         
         if (action.payload?.isApiError) {
@@ -501,7 +580,7 @@ const paymentSlice = createSlice({
           };
         } else {
           state.error = {
-            message: action.payload || 'Stripe payment request failed',
+            message: action.payload || 'Flutterwave payment request failed',
             isNetworkError: true
           };
         }
@@ -628,7 +707,7 @@ export const {
   clearTransaction, 
   setPolling,
   updatePaymentStatus,
-  resetProcessingState // Export the new action
+  resetProcessingState
 } = paymentSlice.actions;
 
 export default paymentSlice.reducer;

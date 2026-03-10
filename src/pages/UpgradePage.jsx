@@ -10,7 +10,7 @@ import {
 } from '@stripe/react-stripe-js';
 import {  
   processSubscriptionMomoPayment,
-  processSubscriptionStripePayment,
+  processSubscriptionFlutterwavePayment,
   checkMoMoPaymentStatus,
   clearTransaction,
   clearError,
@@ -501,7 +501,7 @@ function UpgradePage() {
       }
     };
 
-    dispatch(processSubscriptionStripePayment(stripePaymentData));
+    dispatch(processSubscriptionFlutterwavePayment(stripePaymentData));
   };
 
   const handleMomoPaymentSubmit = async (e) => {
