@@ -6,7 +6,8 @@ import MovieContent from "./components/MovieContent"
 import UserHomepage from "./components/UserHomepage"
 import Navbar from "./components/Navbar"
 import ScrollTop from "./components/ScrollTop"
-import ScrollToTop from "./components/ScrollToTop"
+// import ScrollToTop from "./components/ScrollToTop"
+import WhatsAppButton from "./components/WhatsAppButton"
 import { MovieProvider } from "./context/MovieProvider";
 import { ThemeProvider } from "./context/ThemeContext";
 
@@ -81,7 +82,7 @@ function AppContent() {
 
   return (
     <>
-      <ScrollToTop />
+      {/* <ScrollToTop /> */}
       {!isDashboardRoute && <Navbar />}
       <main>
         <Routes>
@@ -253,6 +254,7 @@ function AppContent() {
       {/* Conditionally render footer - hide for filmmaker and admin */}
       {!shouldHideFooter && <Footer />}
       <ScrollTop />
+      <WhatsAppButton />
     </>
   );
 }

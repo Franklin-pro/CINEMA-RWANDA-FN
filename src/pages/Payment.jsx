@@ -302,8 +302,13 @@ localStorage.setItem("localpayment:",localPaymentStatus)
       }
       
       const result = await dispatch(processFlutterwavePayment(payload)).unwrap();
-      if (result.link) {
-        window.location.href = result.link;
+      if (result.paymentLink || result.link || result.data?.paymentLink || result.data?.link) {
+        const paymentLink = result.paymentLink || result.link || result.data?.paymentLink || result.data?.link;
+        window.open(paymentLink, '_blank');
+      } else {
+        setProcessing(false);
+        setStep("confirm");
+        setFormError("Payment link not received. Please try again.");
       }
     } catch (err) {
       setProcessing(false);
@@ -548,14 +553,15 @@ localStorage.setItem("localpayment:",localPaymentStatus)
                           <div className="text-xs text-gray-500">Bank Transfer</div>
                           <span className="absolute top-1 right-1 text-[8px] bg-yellow-500 text-black px-1 rounded">Coming Soon</span>
                         </button>
-                        <button onClick={() => setPaymentMethod("card")} className={`p-3 rounded-lg border-2 transition ${paymentMethod === "card" ? "border-blue-500 bg-blue-500/10" : "border-gray-700 bg-gray-800"}`}>
-                          <CreditCard className="w-5 h-5 text-white mx-auto mb-1" />
+                        <button disabled onClick={() => setPaymentMethod("card")} className={`p-3 rounded-lg border-2 relative bg-gray-800/50 opacity-50 cursor-not-allowed transition ${paymentMethod === "card" ? "border-blue-500 bg-blue-500/10" : "border-gray-700 bg-gray-800"}`}>
+                          <span className="absolute top-1 right-1 text-[8px] bg-yellow-500 text-black px-1 rounded">Coming Soon</span>
+                          <CreditCard className="w-5 h-5  text-white mx-auto mb-1" />
                           <div className="text-xs text-white">Card</div>
                         </button>
                         <button disabled className="p-3 rounded-lg border-2 border-gray-700 bg-gray-800/50 opacity-50 cursor-not-allowed relative">
                           <Wallet className="w-5 h-5 text-gray-500 mx-auto mb-1" />
                           <div className="text-xs text-gray-500">PayPal</div>
-                          <span className="absolute top-1 right-1 text-[8px] bg-yellow-500 text-black px-1 rounded">Soon</span>
+                          <span className="absolute top-1 right-1 text-[8px] bg-yellow-500 text-black px-1 rounded">Coming Soon</span>
                         </button>
                       </div>
                     </div>
@@ -585,6 +591,10 @@ localStorage.setItem("localpayment:",localPaymentStatus)
 
                     {paymentMethod === "card" && (
                       <div>
+                        <div className="mb-3 p-4 bg-gray-800 rounded-lg border border-gray-700">
+                          <p className="text-sm text-gray-300 mb-2">Pay with Card</p>
+                          <p className="text-xs text-gray-400">You will be redirected to Flutterwave to complete payment securely.</p>
+                        </div>
                         <button 
                           type="button" 
                           onClick={doFlutterwavePayment} 

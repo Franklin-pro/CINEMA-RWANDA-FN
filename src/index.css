@@ -1,9 +1,13 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&display=swap');
 @import "tailwindcss";
-
 html {
   scroll-behavior: smooth;
 }
-
+body {
+  font-family: 'Montserrat', sans-serif;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+}
 /* Dark mode support */
 @media (prefers-color-scheme: dark) {
   :root {
