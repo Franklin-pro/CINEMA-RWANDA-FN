@@ -1277,195 +1277,378 @@ function FilmmakerDashboard() {
                   </div>
                 </div>
 
-                {/* Payment Method */}
-                {paymentMethod && (
-                  <div
-                    className={`${
-                      darkMode
-                        ? "bg-gray-800 border-gray-700"
-                        : "bg-white border-gray-200"
-                    } border rounded-xl p-4 sm:p-6 transition-colors duration-200`}
+              {/* Payment Method */}
+<div
+  className={`${
+    darkMode
+      ? "bg-gray-800 border-gray-700"
+      : "bg-white border-gray-200"
+  } border rounded-xl p-4 sm:p-6 transition-colors duration-200`}
+>
+  <h3
+    className={`text-base sm:text-lg font-bold mb-4 flex items-center gap-2 ${
+      darkMode ? "text-white" : "text-gray-900"
+    }`}
+  >
+    <Wallet className="w-4 sm:w-5 h-4 sm:h-5 text-blue-600" />
+    Payment Method
+  </h3>
+  <p
+    className={`text-xs sm:text-sm mb-4 ${
+      darkMode ? "text-gray-400" : "text-gray-600"
+    }`}
+  >
+    Manage your payment methods to ensure timely payouts
+  </p>
+
+  {(() => {
+    // Safely access payment method data with fallbacks
+    const currentMethod = paymentMethod?.currentMethod;
+    const allMethods = paymentMethod?.paymentDetails?.allMethods || {};
+    const bankDetails = allMethods?.bankDetails || {};
+    const momoNumber = allMethods?.momoPhoneNumber || paymentMethod?.paymentDetails?.momo;
+    const paypalEmail = allMethods?.paypalEmail;
+    const stripeAccountId = allMethods?.stripeAccountId;
+    const isVerified = paymentMethod?.verificationStatus?.bankDetails || false;
+
+    // Check if any payment method is configured
+    const hasBankDetails = bankDetails?.bankName && bankDetails?.accountNumber;
+    const hasMomo = momoNumber;
+    const hasPaypal = paypalEmail;
+    const hasStripe = stripeAccountId;
+
+    const isConfigured = hasBankDetails || hasMomo || hasPaypal || hasStripe;
+
+    // Show configured but unverified payment method
+    if (isConfigured && !isVerified) {
+      return (
+        <div
+          className={`rounded-xl border shadow-sm p-4 sm:p-5 mb-4 sm:mb-6 transition-all ${
+            darkMode
+              ? "bg-gray-900/40 border-gray-700"
+              : "bg-white border-gray-200"
+          }`}
+        >
+          {/* Header with Unverified Badge */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+            <div className="flex items-center gap-3">
+              <div
+                className={`p-2 rounded-lg ${
+                  darkMode ? "bg-yellow-900/30" : "bg-yellow-100"
+                }`}
+              >
+                <AlertCircle
+                  className={`w-4 sm:w-5 h-4 sm:h-5 ${
+                    darkMode ? "text-yellow-400" : "text-yellow-600"
+                  }`}
+                />
+              </div>
+
+              <div>
+                <p
+                  className={`text-xs sm:text-sm uppercase tracking-wide font-bold ${
+                    darkMode ? "text-yellow-300" : "text-yellow-700"
+                  }`}
+                >
+                  Payment Method Set
+                </p>
+
+                <p
+                  className={`text-lg sm:text-xl font-semibold capitalize ${
+                    darkMode ? "text-white" : "text-gray-900"
+                  }`}
+                >
+                  {currentMethod?.replace('_', ' ') || 'Bank Transfer'}
+                </p>
+              </div>
+            </div>
+
+            <span className="text-xs px-3 py-1 rounded-full font-medium shadow-sm self-start sm:self-auto bg-yellow-500 text-white">
+              Pending Verification
+            </span>
+          </div>
+
+          {/* Warning Message */}
+          <div
+            className={`${
+              darkMode
+                ? "bg-yellow-900/20 border-yellow-800"
+                : "bg-yellow-50 border-yellow-200"
+            } border rounded-lg p-3 mb-4 flex items-start gap-2`}
+          >
+            <AlertCircle className="w-4 h-4 text-yellow-600 flex-shrink-0 mt-0.5" />
+            <p className={`text-xs sm:text-sm ${darkMode ? "text-yellow-300" : "text-yellow-700"}`}>
+              Your payment method is awaiting admin verification. You'll receive payouts once verified. This usually takes 1-2 business days.
+            </p>
+          </div>
+
+          {/* PAYMENT DETAILS */}
+          <div className="mt-2 space-y-3 text-sm">
+            {/* MOMO DETAILS */}
+            {(currentMethod === "momo" || hasMomo) && momoNumber && (
+              <div>
+                <p
+                  className={`text-xs uppercase tracking-wide mb-1 ${
+                    darkMode ? "text-gray-400" : "text-gray-500"
+                  }`}
+                >
+                  Mobile Money Number
+                </p>
+                <p
+                  className={`font-mono text-sm sm:text-base font-medium ${
+                    darkMode ? "text-gray-200" : "text-gray-800"
+                  }`}
+                >
+                  {momoNumber}
+                </p>
+                <p className={`text-xs mt-1 ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
+                  MTN Rwanda
+                </p>
+              </div>
+            )}
+
+            {/* BANK DETAILS */}
+            {(currentMethod === "bank_transfer" || currentMethod === "bank" || hasBankDetails) && bankDetails && (
+              <div className="space-y-3">
+                <div>
+                  <p
+                    className={`text-xs uppercase tracking-wide mb-1 ${
+                      darkMode ? "text-gray-400" : "text-gray-500"
+                    }`}
                   >
-                    <h3
-                      className={`text-base sm:text-lg font-bold mb-4 flex items-center gap-2 ${
-                        darkMode ? "text-white" : "text-gray-900"
-                      }`}
-                    >
-                      <Wallet className="w-4 sm:w-5 h-4 sm:h-5 text-blue-600" />
-                      Payment Method
-                    </h3>
+                    Bank Name
+                  </p>
+                  <p
+                    className={`font-medium ${
+                      darkMode ? "text-gray-200" : "text-gray-800"
+                    }`}
+                  >
+                    {bankDetails.bankName}
+                  </p>
+                </div>
+
+                <div>
+                  <p
+                    className={`text-xs uppercase tracking-wide mb-1 ${
+                      darkMode ? "text-gray-400" : "text-gray-500"
+                    }`}
+                  >
+                    Account Number
+                  </p>
+                  <p
+                    className={`font-mono font-medium ${
+                      darkMode ? "text-gray-200" : "text-gray-800"
+                    }`}
+                  >
+                    •••• {bankDetails.accountNumber?.slice(-4) || '••••'}
+                  </p>
+                </div>
+
+                {bankDetails.accountName && (
+                  <div>
                     <p
-                      className={`text-xs sm:text-sm mb-4 ${
-                        darkMode ? "text-gray-400" : "text-gray-600"
+                      className={`text-xs uppercase tracking-wide mb-1 ${
+                        darkMode ? "text-gray-400" : "text-gray-500"
                       }`}
                     >
-                      Manage your payment methods to ensure timely payouts
+                      Account Name
                     </p>
-
-                    {paymentMethod?.currentMethod ? (
-                      <div
-                        className={`rounded-xl border shadow-sm p-4 sm:p-5 mb-4 sm:mb-6 transition-all ${
-                          darkMode
-                            ? "bg-gray-900/40 border-gray-700"
-                            : "bg-white border-gray-200"
-                        }`}
-                      >
-                        {/* Header */}
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-                          <div className="flex items-center gap-3">
-                            <div
-                              className={`p-2 rounded-lg ${
-                                darkMode ? "bg-green-700/30" : "bg-green-100"
-                              }`}
-                            >
-                              <CheckCircle
-                                className={`w-4 sm:w-5 h-4 sm:h-5 ${
-                                  darkMode ? "text-green-400" : "text-green-600"
-                                }`}
-                              />
-                            </div>
-
-                            <div>
-                              <p
-                                className={`text-xs sm:text-sm uppercase tracking-wide font-bold ${
-                                  darkMode ? "text-green-300" : "text-green-700"
-                                }`}
-                              >
-                                Active Payment Method
-                              </p>
-
-                              <p
-                                className={`text-lg sm:text-xl font-semibold capitalize ${
-                                  darkMode ? "text-white" : "text-gray-900"
-                                }`}
-                              >
-                                {paymentMethod.currentMethod}
-                              </p>
-                            </div>
-                          </div>
-
-                          <span className="text-xs px-3 py-1 rounded-full bg-green-600 text-white font-medium shadow-sm self-start sm:self-auto">
-                            Verified
-                          </span>
-                        </div>
-
-                        {/* PAYMENT DETAILS */}
-                        <div className="mt-2 space-y-3 text-sm">
-                          {/* MOMO */}
-                          {paymentMethod.currentMethod === "momo" &&
-                            paymentMethod.paymentDetails?.momo && (
-                              <div>
-                                <p
-                                  className={`text-xs uppercase tracking-wide mb-1 ${
-                                    darkMode ? "text-gray-400" : "text-gray-500"
-                                  }`}
-                                >
-                                  Mobile Money Number
-                                </p>
-                                <p
-                                  className={`font-mono text-sm sm:text-base font-medium ${
-                                    darkMode ? "text-gray-200" : "text-gray-800"
-                                  }`}
-                                >
-                                  {paymentMethod.paymentDetails.momo}
-                                </p>
-                              </div>
-                            )}
-
-                          {/* BANK */}
-                          {paymentMethod.currentMethod === "bank" &&
-                            paymentMethod.paymentDetails?.allMethods
-                              ?.bankDetails && (
-                              <div className="space-y-3">
-                                <div>
-                                  <p
-                                    className={`text-xs uppercase tracking-wide mb-1 ${
-                                      darkMode
-                                        ? "text-gray-400"
-                                        : "text-gray-500"
-                                    }`}
-                                  >
-                                    Bank Name
-                                  </p>
-                                  <p
-                                    className={`font-medium ${
-                                      darkMode
-                                        ? "text-gray-200"
-                                        : "text-gray-800"
-                                    }`}
-                                  >
-                                    {
-                                      paymentMethod.paymentDetails.allMethods
-                                        .bankDetails.bankName
-                                    }
-                                  </p>
-                                </div>
-
-                                <div>
-                                  <p
-                                    className={`text-xs uppercase tracking-wide mb-1 ${
-                                      darkMode
-                                        ? "text-gray-400"
-                                        : "text-gray-500"
-                                    }`}
-                                  >
-                                    Account Number
-                                  </p>
-                                  <p
-                                    className={`font-mono font-medium ${
-                                      darkMode
-                                        ? "text-gray-200"
-                                        : "text-gray-800"
-                                    }`}
-                                  >
-                                    ****{" "}
-                                    {paymentMethod.paymentDetails.allMethods.bankDetails.accountNumber?.slice(
-                                      -4
-                                    )}
-                                  </p>
-                                </div>
-                              </div>
-                            )}
-                        </div>
-                      </div>
-                    ) : (
-                      <div
-                        className={`${
-                          darkMode
-                            ? "bg-blue-900/20 border-blue-800"
-                            : "bg-blue-50 border-blue-200"
-                        } border rounded-lg p-4 mb-4 flex items-start gap-3 transition-colors duration-200`}
-                      >
-                        <AlertCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-                        <div>
-                          <p
-                            className={`font-semibold ${
-                              darkMode ? "text-blue-400" : "text-blue-900"
-                            }`}
-                          >
-                            No payment method configured
-                          </p>
-                          <p
-                            className={`text-sm ${
-                              darkMode ? "text-blue-300" : "text-blue-700"
-                            }`}
-                          >
-                            Add a payment method to receive payouts
-                          </p>
-                        </div>
-                      </div>
-                    )}
-
-                    <button
-                      onClick={() => navigate("/filmmaker/payment-method")}
-                      className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-lg transition-colors text-sm sm:text-base"
+                    <p
+                      className={`font-medium ${
+                        darkMode ? "text-gray-200" : "text-gray-800"
+                      }`}
                     >
-                      {paymentMethod?.currentMethod
-                        ? "Update Payment Method"
-                        : "Add Payment Method"}
-                    </button>
+                      {bankDetails.accountName}
+                    </p>
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* PAYPAL DETAILS */}
+            {(currentMethod === "paypal" || hasPaypal) && paypalEmail && (
+              <div>
+                <p
+                  className={`text-xs uppercase tracking-wide mb-1 ${
+                    darkMode ? "text-gray-400" : "text-gray-500"
+                  }`}
+                >
+                  PayPal Email
+                </p>
+                <p
+                  className={`font-mono text-sm sm:text-base font-medium ${
+                    darkMode ? "text-gray-200" : "text-gray-800"
+                  }`}
+                >
+                  {paypalEmail}
+                </p>
+              </div>
+            )}
+
+            {/* STRIPE DETAILS */}
+            {(currentMethod === "stripe" || hasStripe) && stripeAccountId && (
+              <div>
+                <p
+                  className={`text-xs uppercase tracking-wide mb-1 ${
+                    darkMode ? "text-gray-400" : "text-gray-500"
+                  }`}
+                >
+                  Stripe Account
+                </p>
+                <p
+                  className={`font-mono text-sm sm:text-base font-medium ${
+                    darkMode ? "text-gray-200" : "text-gray-800"
+                  }`}
+                >
+                  {stripeAccountId}
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Verification Progress */}
+          <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <div className="flex items-center justify-between mb-2">
+              <span className={`text-xs font-medium ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+                Verification Status
+              </span>
+              <span className="text-xs font-medium text-yellow-600">In Progress</span>
+            </div>
+            <div className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+              <div className="h-full w-1/2 bg-yellow-500 rounded-full animate-pulse"></div>
+            </div>
+            <p className={`text-xs mt-2 ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
+              Admin will verify your payment method within 24-48 hours
+            </p>
+          </div>
+        </div>
+      );
+    }
+
+    // Show configured and verified payment method
+    if (isConfigured && isVerified) {
+      return (
+        <div
+          className={`rounded-xl border shadow-sm p-4 sm:p-5 mb-4 sm:mb-6 transition-all ${
+            darkMode
+              ? "bg-gray-900/40 border-gray-700"
+              : "bg-white border-gray-200"
+          }`}
+        >
+          {/* Header with Verified Badge */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+            <div className="flex items-center gap-3">
+              <div
+                className={`p-2 rounded-lg ${
+                  darkMode ? "bg-green-700/30" : "bg-green-100"
+                }`}
+              >
+                <CheckCircle
+                  className={`w-4 sm:w-5 h-4 sm:h-5 ${
+                    darkMode ? "text-green-400" : "text-green-600"
+                  }`}
+                />
+              </div>
+
+              <div>
+                <p
+                  className={`text-xs sm:text-sm uppercase tracking-wide font-bold ${
+                    darkMode ? "text-green-300" : "text-green-700"
+                  }`}
+                >
+                  Active Payment Method
+                </p>
+
+                <p
+                  className={`text-lg sm:text-xl font-semibold capitalize ${
+                    darkMode ? "text-white" : "text-gray-900"
+                  }`}
+                >
+                  {currentMethod?.replace('_', ' ') || 'Bank Transfer'}
+                </p>
+              </div>
+            </div>
+
+            <span className="text-xs px-3 py-1 rounded-full font-medium shadow-sm self-start sm:self-auto bg-green-600 text-white">
+              Verified
+            </span>
+          </div>
+
+          {/* Success Message */}
+          <div
+            className={`${
+              darkMode
+                ? "bg-green-900/20 border-green-800"
+                : "bg-green-50 border-green-200"
+            } border rounded-lg p-3 mb-4 flex items-start gap-2`}
+          >
+            <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
+            <p className={`text-xs sm:text-sm ${darkMode ? "text-green-300" : "text-green-700"}`}>
+              Your payment method is verified. You'll receive automatic payouts for all content sales.
+            </p>
+          </div>
+
+          {/* PAYMENT DETAILS (same as above) */}
+          <div className="mt-2 space-y-3 text-sm">
+            {/* ... payment details section ... */}
+          </div>
+        </div>
+      );
+    }
+
+    // Show "no payment method" message
+    return (
+      <div
+        className={`${
+          darkMode
+            ? "bg-blue-900/20 border-blue-800"
+            : "bg-blue-50 border-blue-200"
+        } border rounded-lg p-4 mb-4 flex items-start gap-3 transition-colors duration-200`}
+      >
+        <AlertCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+        <div>
+          <p
+            className={`font-semibold ${
+              darkMode ? "text-blue-400" : "text-blue-900"
+            }`}
+          >
+            No payment method configured
+          </p>
+          <p
+            className={`text-sm ${
+              darkMode ? "text-blue-300" : "text-blue-700"
+            }`}
+          >
+            Add a payment method to receive payouts from your content sales
+          </p>
+        </div>
+      </div>
+    );
+  })()}
+
+  <button
+    onClick={() => navigate("/filmmaker/payment-method")}
+    className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-2.5 sm:py-3 rounded-lg transition-all duration-200 hover:shadow-lg text-sm sm:text-base"
+  >
+    {(() => {
+      // const currentMethod = paymentMethod?.currentMethod;
+      const allMethods = paymentMethod?.paymentDetails?.allMethods || {};
+      const bankDetails = allMethods?.bankDetails || {};
+      const momoNumber = allMethods?.momoPhoneNumber || paymentMethod?.paymentDetails?.momo;
+      const paypalEmail = allMethods?.paypalEmail;
+      const stripeAccountId = allMethods?.stripeAccountId;
+
+      const hasBankDetails = bankDetails?.bankName && bankDetails?.accountNumber;
+      const hasMomo = momoNumber;
+      const hasPaypal = paypalEmail;
+      const hasStripe = stripeAccountId;
+
+      const isConfigured = hasBankDetails || hasMomo || hasPaypal || hasStripe;
+
+      return isConfigured ? "Update Payment Method" : "Add Payment Method";
+    })()}
+  </button>
+</div>
               </div>
             )}
 

@@ -65,6 +65,11 @@ const AGE_RESTRICTIONS = [
 function UploadMovie() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+
+  // Check filmmaker approval status from localStorage
+  const userInfo = JSON.parse(localStorage.getItem('user') || '{}');
+  const approvalStatus = userInfo.approvalStatus || 'pending';
+  const isApproved = approvalStatus === 'approved';
   
   // Select state from Redux
   const { 
@@ -1542,7 +1547,6 @@ function UploadMovie() {
 
       {/* Main Content */}
       <div className="max-w-4xl mx-auto px-4 py-8">
-        {/* Success Message */}
         {uploadSuccess && (
           <div className="mb-6 p-4 bg-green-500/10 border border-green-500/30 rounded-lg">
             <div className="flex items-center gap-3">

@@ -253,7 +253,7 @@ function AppContent() {
       
       {/* Conditionally render footer - hide for filmmaker and admin */}
       {!shouldHideFooter && <Footer />}
-      <ScrollTop />
+      {/* <ScrollTop /> */}
       <WhatsAppButton />
     </>
   );
